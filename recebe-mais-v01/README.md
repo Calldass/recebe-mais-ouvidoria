@@ -1,4 +1,4 @@
-# Recebe+ Ouvidoria · v0.2 (TESTE NA NUVEM)
+# Recebe+ Ouvidoria · v0.2.1 — OIDC (TESTE NA NUVEM)
 
 Protótipo funcional em HTML, CSS, JavaScript (frontend) e Vercel Functions/Node.js (API). Arquivos são enviados diretamente para **Vercel Blob PRIVATE**. O projeto **não** deve receber informações ou vídeos reais de cidadãos sem uma aprovação institucional adequada. É um teste técnico em conta pessoal, sem integração com o ambiente da ANTT.
 
@@ -38,7 +38,8 @@ Envie/substitua os arquivos/pastas dentro de `recebe-mais-v01`:
 3. Escolha acesso **Private**, nunca Public.
 4. Nome sugerido: `recebe-mais-teste`.
 5. Associe a **Production** (ambiente necessário para o domínio principal).
-6. Verifique em **Settings > Environment Variables** que está disponível `BLOB_READ_WRITE_TOKEN`. Ele deve existir somente como variável secreta no servidor. Se a integração criou apenas variáveis OIDC, consulte as configurações da store para obter um token de leitura/escrita compatível com `handleUpload` ou ajuste a integração para o fluxo OIDC; **não** cole esse token no GitHub.
+6. **Novo padrão OIDC (junho/2026):** verifique em **Settings > Environment Variables** que `BLOB_STORE_ID` e `BLOB_WEBHOOK_PUBLIC_KEY` aparecem no ambiente **Production**. Não é necessário criar a antiga `BLOB_READ_WRITE_TOKEN`. O `VERCEL_OIDC_TOKEN` é fornecido em execução pela Vercel.
+7. Esta versão usa `handleUploadPresigned` com `issueSignedToken` para transferir arquivos com `multipart:true`, autenticar o link de convite no backend e limitar tipos e tamanhos; o `onUploadCompleted` não guarda dados de manifestação.
 
 ## 4. Configurar as outras variáveis de ambiente
 
@@ -49,6 +50,8 @@ Acesse **Settings** → **Environment Variables** e crie na opção **Production
 | `APP_SECRET` | string aleatória com no mínimo 32 caracteres | Assina os convites e a sessão do atendente |
 | `STAFF_PASSWORD` | senha forte de no mínimo 16 caracteres | Senha do painel de testes; não compartilhar publicamente |
 | `CRON_SECRET` | string aleatória com no mínimo 16 caracteres | Protege `/api/cleanup` |
+| `BLOB_STORE_ID` | automático pela Vercel | Identificador do armazenamento privado com OIDC |
+| `BLOB_WEBHOOK_PUBLIC_KEY` | automático pela Vercel | Valida a autenticidade das notificações de upload |
 | `MAX_FILE_MB` | `1024` | Limite por arquivo de 1 GB; pode diminuir para `50` durante testes iniciais |
 | `RETENTION_DAYS` | `3` | Remove arquivos e sessões 3 dias após o vencimento |
 
@@ -72,7 +75,7 @@ Depois de vincular o Blob e salvar as variáveis, execute um **Redeploy** em **D
 6. Retorne ao painel, atualize os anexos e clique **Baixar**.
 7. Confira a exclusão após o período de retenção escolhido e a execução da tarefa programada.
 
-Se `/api/health` mostrar `pending`, alguma variável está faltando na implantação de produção.
+Se `/api/health` mostrar `pending`, confirme `APP_SECRET`, `STAFF_PASSWORD` e `BLOB_STORE_ID` no ambiente Production e gere novo deployment.
 
 ## 6. Limitações e pendências (obrigatórias antes de uso real)
 
@@ -88,8 +91,8 @@ Se `/api/health` mostrar `pending`, alguma variável está faltando na implanta�
 
 ## 7. Tecnologias
 
-- `@vercel/blob` ^2.4 (Private Storage e URLs assinadas)
-- `@vercel/blob/client` com `multipart: true`
+- `@vercel/blob` ^2.7 (Private Storage, OIDC e URLs assinadas)
+- `@vercel/blob/client` (`uploadPresigned` e `handleUploadPresigned`) com `multipart: true`
 - Vercel Functions para APIs em `api/`
 - Esbuild gera o bundle do cliente durante `npm run build`
 - `lib/repo.js` usa arquivos JSON dentro do Blob privado como pequeno registro de sessões de teste (não adequado para escala institucional)
@@ -119,3 +122,13 @@ npm run build
 ```
 
 Para simular Functions localmente precisará da Vercel CLI e das variáveis seguras, e os webhooks de conclusão Blob podem exigir URL pública. Prefira os testes end-to-end no ambiente de Vercel com arquivos fictícios.
+
+## 10. Mudanças de 0.2.1 para OIDC
+
+- Usa o token OIDC temporário da própria Vercel, sem depender de credenciais permanentes.
+- `handleUploadPresigned` autoriza o upload somente depois de validar o convite assinado, o prazo de recebimento, o limite por arquivo e as extensões.
+- Usa `issueSignedToken` limitado à operação `put` e ao caminho solicitado.
+- Mantém upload multipart e progresso visual.
+- Não fornece garantia de retomada após encerrar o navegador.
+- As credenciais `APP_SECRET`, `STAFF_PASSWORD` e `CRON_SECRET` devem permanecer apenas nas variáveis sensíveis da Vercel.
+- **Esta é uma integração experimental.** Validar uploads e downloads com arquivos fictícios antes de aumentar limites de tamanho; ainda requer análise institucional para dados reais.

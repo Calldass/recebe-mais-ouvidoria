@@ -1,4 +1,4 @@
-import {upload} from '@vercel/blob/client';
+import {uploadPresigned} from '@vercel/blob/client';
 (async()=>{
 'use strict';const R=window.Recebe;
 const invite=new URLSearchParams(location.search).get('convite');
@@ -38,7 +38,7 @@ btn.addEventListener('click',async()=>{
   try{
     document.getElementById('current-file').textContent=`Enviando: ${file.name}`;
     progress.value=0;progress.hidden=false;
-    await upload(pathname,file,{
+    await uploadPresigned(pathname,file,{
       access:'private',multipart:true,contentType:file.type||'application/octet-stream',handleUploadUrl:'/api/upload',
       clientPayload:JSON.stringify({id,invite,size:file.size}),onUploadProgress:e=>{progress.value=Math.round(e.percentage);document.getElementById('progress-label').textContent=`${Math.round(e.percentage)}%`;}
     });
