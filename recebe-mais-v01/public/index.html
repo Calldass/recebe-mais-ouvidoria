@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#14233a"><meta name="robots" content="noindex,nofollow">
+<title>Central de recebimento | Recebe+ Ouvidoria — Demonstração</title>
+<link rel="stylesheet" href="/assets/style.css"><script src="/assets/base.js" defer></script><script src="/assets/dashboard.js" defer></script>
+</head>
+<body>
+<div class="page-bg" aria-hidden="true"></div>
+<header class="site-header"><div class="site-inner"><a href="/" class="brand"><div class="brand-mark" aria-hidden="true">↥</div><div class="brand-text"><strong>recebe<span class="brand-plus">+</span></strong><small>OUVIDORIA · PROTÓTIPO</small></div></a><div class="header-right"><span class="mode-tag">VERSÃO 0.1 · DEMO</span></div></div></header>
+<main class="container">
+<div class="demo-banner" role="status"><span class="demo-dot">●</span><div><strong>Ambiente de demonstração — sem envio de arquivos</strong><p>Esta versão é aberta e não possui autenticação. Use somente dados fictícios. Os recebimentos são salvos apenas neste navegador.</p></div></div>
+<div class="page-heading"><div><div class="eyebrow"><span class="dot"></span> Central de recebimento</div><h1>Área do atendente</h1><p class="muted">Gere um QR Code e experimente o fluxo de envio de anexos da Ouvidoria.</p></div><div class="heading-accent">ATENDIMENTO<br><strong>SIMPLIFICADO</strong></div></div>
+<div class="stats-row"><div class="stat"><span>Recebimentos neste navegador</span><strong id="total-receipts">0</strong></div><div class="stat"><span>Links de demonstração ativos</span><strong id="active-receipts">0</strong></div><div class="stat stat-highlight"><span>Ambiente</span><strong>Simulação</strong></div></div>
+<div class="dashboard-grid">
+<section class="surface create-card"><div class="section-heading"><span class="mini-icon">＋</span><div><h2>Novo recebimento</h2><p>Crie o link e apresente o QR Code.</p></div></div>
+<form id="new-receipt" class="form-stack">
+<label for="reference">Referência interna <span class="optional">opcional</span></label><input id="reference" type="text" maxlength="80" autocomplete="off" placeholder="Ex.: Teste de atendimento 001"><div class="helper">Não informe nomes, CPF ou números reais de protocolo nesta demonstração.</div>
+<label for="ttl">Prazo demonstrativo do link</label><select id="ttl"><option value="30">30 minutos</option><option value="120" selected>2 horas</option><option value="480">8 horas</option><option value="1440">24 horas</option></select>
+<button type="submit" class="btn btn-primary btn-full">Gerar QR Code e link <span aria-hidden="true">↗</span></button>
+</form></section>
+<section class="surface steps-card"><div class="section-heading"><span class="mini-icon muted-icon">?</span><div><h2>Como funciona a demonstração</h2><p>Um teste visual para os dois lados.</p></div></div><ol class="steps"><li><span>01</span><div><strong>Gere um recebimento</strong><p>Um QR Code e um link são criados diretamente no navegador.</p></div></li><li><span>02</span><div><strong>Abra no celular</strong><p>Com o site publicado na Vercel, o celular abrirá a página de envio.</p></div></li><li><span>03</span><div><strong>Selecione um arquivo para simular</strong><p>Nenhum arquivo é transferido. O painel também pode simular anexos fictícios.</p></div></li></ol></section>
+</div>
+<section class="surface history-card"><div class="section-heading heading-space"><div><h2>Recebimentos criados</h2><p>Histórico local para avaliar a navegação da interface.</p></div><button type="button" id="reset-demo" class="btn btn-quiet">Limpar demonstração</button></div>
+<div id="empty-receipts" class="empty-state"><div class="empty-circle">↥</div><h3>Seu primeiro recebimento começa aqui</h3><p>Preencha o formulário acima para gerar seu primeiro QR Code.</p></div>
+<div class="table-wrapper"><table><thead><tr><th>Referência</th><th>Criado em</th><th>Prazo</th><th>Situação</th><th></th></tr></thead><tbody id="receipt-rows"></tbody></table></div>
+<div id="notice" class="notice" hidden role="status"></div></section>
+</main><footer class="site-footer"><span>Recebe+ Ouvidoria · Demonstração técnica, não institucional</span><span>Versão 0.1 · Nenhum arquivo é enviado</span></footer>
+</body></html>
