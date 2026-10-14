@@ -1,37 +1,24 @@
-(() => {
- 'use strict';
- const D=window.RecebeDemo;
- const form=document.getElementById('new-receipt');
- const rows=document.getElementById('receipt-rows');
- const empty=document.getElementById('empty-receipts');
- const total=document.getElementById('total-receipts');
- const active=document.getElementById('active-receipts');
- function draw() {
-   const list=D.load();
-   rows.replaceChildren(); empty.hidden=list.length>0;
-   total.textContent=list.length;
-   active.textContent=list.filter(s=>D.state(s)==='Ativo').length;
-   list.forEach(s=>{
-     const r=D.el('tr');
-     const name=D.el('td'); const b=D.el('strong','reference',s.reference||'Recebimento sem referência');
-     name.append(b,D.el('div','small-muted',`Código ${s.id.slice(0,8)}`));
-     r.append(name,D.el('td','date-cell',D.when(s.created)),D.el('td','date-cell',D.when(s.expires)));
-     const status=D.el('td'); status.append(D.el('span','status-pill '+(D.state(s)==='Ativo'?'success':'neutral'),D.state(s)));
-     const open=D.el('td'); const a=D.el('a','action-link','Ver QR Code →'); a.href=`/recebimento.html?id=${encodeURIComponent(s.id)}`;open.append(a);
-     r.append(status,open); rows.append(r);
-   });
- }
- form.addEventListener('submit',e=>{
-   e.preventDefault();
-   const ref=document.getElementById('reference').value;
-   const ttl=document.getElementById('ttl').value;
-   const s=D.create(ref,ttl);
-   location.href=`/recebimento.html?id=${encodeURIComponent(s.id)}`;
+(async()=>{
+'use strict';const R=window.Recebe;if(!await R.staff())return;
+document.getElementById('logout').addEventListener('click',R.logout);
+const rows=document.getElementById('receipt-rows'),empty=document.getElementById('empty-receipts');
+async function draw(){
+ try{const list=(await R.api('/api/receipts')).receipts;
+ rows.replaceChildren();empty.hidden=list.length>0;
+ document.getElementById('total-receipts').textContent=list.length;
+ document.getElementById('active-receipts').textContent=list.filter(s=>R.state(s)==='Ativo').length;
+ list.forEach(s=>{
+ const tr=R.el('tr');const name=R.el('td');name.append(R.el('strong','',s.reference||'Sem referência'),R.el('div','small-muted',`Código ${s.id.slice(0,8)}`));
+ tr.append(name,R.el('td','date-cell',R.fmtDate(s.created)),R.el('td','date-cell',R.fmtDate(s.expires)));
+ const st=R.state(s),td=R.el('td');td.append(R.el('span',`status-pill ${st==='Ativo'?'success':'neutral'}`,st));tr.append(td);
+ const tdLink=R.el('td'),a=R.el('a','action-link','Ver recebimento →');a.href=`/recebimento.html?id=${encodeURIComponent(s.id)}`;tdLink.append(a);tr.append(tdLink);rows.append(tr);
  });
- const clear=document.getElementById('reset-demo');
- clear.addEventListener('click',()=>{
-   if(!window.confirm('Apagar apenas os dados de demonstração deste navegador?')) return;
-   D.save([]);draw();D.note('Histórico de demonstração limpo.');
- });
- draw();
+ }catch(err){R.msg('Não foi possível carregar os recebimentos: '+err.message,'danger');}
+}
+document.getElementById('new-receipt').addEventListener('submit',async e=>{
+ e.preventDefault();const submit=e.target.querySelector('button[type=submit]');submit.disabled=true;
+ try{const data=await R.api('/api/receipts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reference:document.getElementById('reference').value,ttl:Number(document.getElementById('ttl').value)})});location.href=`/recebimento.html?id=${data.receipt.id}`;}
+ catch(err){R.msg(err.message,'danger');submit.disabled=false;}
+});
+await draw();
 })();

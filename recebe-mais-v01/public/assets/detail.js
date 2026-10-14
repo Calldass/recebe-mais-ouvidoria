@@ -1,47 +1,37 @@
-(() => {
- 'use strict';
- const D=window.RecebeDemo;
- const id=new URLSearchParams(location.search).get('id');
- const error=document.getElementById('not-found');
- const pane=document.getElementById('session-view');
- let s=D.read(id);
- if(!s){error.hidden=false;pane.hidden=true;return;}
- const url=D.link(s);
- document.getElementById('reference-title').textContent=s.reference||'Recebimento sem referência';
- document.getElementById('receipt-id').textContent=s.id.slice(0,8);
- document.getElementById('created-at').textContent=D.when(s.created);
- document.getElementById('expires-at').textContent=D.when(s.expires);
- const status=document.getElementById('receipt-status');
- const input=document.getElementById('public-link'); input.value=url;
- const qr=document.getElementById('qr-image');
- try{qr.innerHTML=window.RecebeQR.svg(url,248);} catch(e){qr.textContent='Não foi possível gerar o QR Code.';}
- function render(){
-   s=D.read(id);if(!s)return;
-   const st=D.state(s);status.textContent=st;status.className='status-pill '+(st==='Ativo'?'success':'neutral');
-   document.getElementById('simulate-btn').disabled=(st!=='Ativo');
-   document.getElementById('close-btn').disabled=s.closed;
-   const list=document.getElementById('simulated-files');list.replaceChildren();
-   const docs=Array.isArray(s.simulated)?s.simulated:[];
-   document.getElementById('file-count').textContent=String(docs.length);
-   document.getElementById('files-empty').hidden=docs.length>0;
-   docs.forEach(f=>{
-     const row=D.el('div','file-row');
-     row.append(D.el('div','file-type','DEMO'));
-     const info=D.el('div','file-info');info.append(D.el('div','file-name',f.name),D.el('div','small-muted',`Simulação · ${D.when(f.time)}`));
-     row.append(info,D.el('span','status-pill waiting','Exemplo visual'));list.append(row);
-   });
+(async()=>{
+'use strict';const R=window.Recebe;if(!await R.staff())return;
+document.getElementById('logout').addEventListener('click',R.logout);
+const id=new URLSearchParams(location.search).get('id');if(!id){R.msg('Código de recebimento ausente.','warning');return;}
+const list=document.getElementById('received-files');let refreshTimer;
+async function refresh(){
+try{
+ const {receipt:r,invite,files}=await R.api(`/api/receipt?id=${encodeURIComponent(id)}`);
+ const link=R.publicLink(invite);
+ document.getElementById('reference-title').textContent=r.reference||'Sem referência';
+ document.getElementById('receipt-id').textContent=r.id.slice(0,8);
+ document.getElementById('created-at').textContent=R.fmtDate(r.created);
+ document.getElementById('expires-at').textContent=R.fmtDate(r.expires);
+ document.getElementById('public-link').value=link;
+ const status=R.state(r),s=document.getElementById('receipt-status');s.textContent=status;s.className=`status-pill ${status==='Ativo'?'success':'neutral'}`;
+ document.getElementById('close-btn').disabled=Boolean(r.closed);
+ try{document.getElementById('qr-image').innerHTML=window.RecebeQR.svg(link,248);}catch{document.getElementById('qr-image').textContent='QR Code indisponível.';}
+ document.getElementById('copy-link').onclick=async()=>R.msg(await R.copy(link)?'Link público copiado.':'Selecione o link e copie manualmente.');
+ document.getElementById('file-count').textContent=files.length;list.replaceChildren();
+ document.getElementById('files-empty').hidden=files.length>0;
+ for(const f of files){const row=R.el('div','file-row');row.append(R.el('div','file-type','ARQ'));
+ const info=R.el('div','file-info');info.append(R.el('div','file-name',f.name),R.el('div','small-muted',`${R.bytes(f.size)} · ${R.fmtDate(f.uploadedAt)}`));row.append(info);
+ const button=R.el('button','btn btn-download','Baixar');button.type='button';button.onclick=async()=>{
+ button.disabled=true;const tab=window.open('about:blank','_blank');try{const data=await R.api(`/api/download?id=${encodeURIComponent(id)}&path=${encodeURIComponent(f.pathname)}`);if(tab){tab.opener=null;tab.location.replace(data.url);}else{location.assign(data.url);}}
+ catch(err){if(tab)tab.close();R.msg('Falha no download: '+err.message,'danger');}finally{button.disabled=false;}
+ };row.append(button);list.append(row);
  }
- document.getElementById('copy-link').addEventListener('click',async()=>{
-   const ok=await D.copy(url);
-   D.note(ok?'Link copiado. Pode abrir no celular, mas não recebe arquivos de verdade.':'Selecione o endereço e use Ctrl+C.');
- });
- document.getElementById('simulate-btn').addEventListener('click',()=>{
-   const next=[...(s.simulated||[]),{name:`arquivo-exemplo-${(s.simulated||[]).length+1}.mp4`,time:Date.now()}];
-   D.update(id,{simulated:next});render();D.note('Anexo fictício adicionado somente neste navegador.');
- });
- document.getElementById('close-btn').addEventListener('click',()=>{
-   if(!confirm('Encerrar este recebimento de demonstração neste navegador?'))return;
-   D.update(id,{closed:true});render();D.note('Recebimento encerrado apenas neste navegador.');
- });
- render();
+}catch(err){R.msg(err.message,'danger');}
+}
+document.getElementById('close-btn').addEventListener('click',async()=>{
+if(!confirm('Encerrar este link de recebimento? Novos envios não serão autorizados.'))return;
+try{await R.api(`/api/receipt?id=${encodeURIComponent(id)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'close'})});await refresh();R.msg('Link encerrado.');}catch(err){R.msg(err.message,'danger');}
+});
+document.getElementById('refresh').addEventListener('click',refresh);
+await refresh();refreshTimer=setInterval(()=>{if(!document.hidden)refresh();},15000);
+window.addEventListener('pagehide',()=>clearInterval(refreshTimer));
 })();
