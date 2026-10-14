@@ -1,0 +1,17 @@
+{
+  "name": "recebe-mais-ouvidoria",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild public/assets/send-src.js --bundle --platform=browser --format=iife --target=es2020 --outfile=public/assets/send.js --minify",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.4.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  },
+  "engines": {"node": ">=20"}
+}
