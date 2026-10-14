@@ -41,7 +41,13 @@ window.RecebeDemo = (() => {
     while(x>=1024&&u<4){x/=1024;u++;}
     return `${x.toFixed(x>=10?0:1)} ${['B','KB','MB','GB','TB'][u]}`;
   }
-  function link(s) {return `${location.origin}/enviar.html?demo=${encodeURIComponent(s.id)}&ate=${encodeURIComponent(s.expires)}`;}
+  // Links para cidadãos devem sempre usar o domínio oficial de PRODUÇÃO,
+  // não o endereço temporário de deploy/branch da Vercel (que exige login).
+  const PRODUCTION_ORIGIN = 'https://recebe-mais-ouvidoria.vercel.app';
+  function publicOrigin() {
+    return location.hostname.endsWith('.vercel.app') ? PRODUCTION_ORIGIN : location.origin;
+  }
+  function link(s) {return `${publicOrigin()}/enviar.html?demo=${encodeURIComponent(s.id)}&ate=${encodeURIComponent(s.expires)}`;}
   function el(tag,cls,text) {const n=document.createElement(tag); if(cls) n.className=cls; if(text!==undefined) n.textContent=text; return n;}
   function note(message, id='notice') { const n=document.getElementById(id); if(n){n.textContent=message;n.hidden=!message;} }
   async function copy(text) {
